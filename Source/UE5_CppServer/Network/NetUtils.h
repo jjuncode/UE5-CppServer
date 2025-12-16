@@ -28,8 +28,16 @@ private:
 	int32			_writeSize = 0;
 };
 
+/*---------------
+	MACRO
+---------------*/
+
 #define USING_SHARED_PTR(name) using name##Ref = TSharedPtr<class name>;
 
 USING_SHARED_PTR(PacketSession);
 USING_SHARED_PTR(Session);
 USING_SHARED_PTR(SendBuffer);
+
+#define SEND_PACKET(session, pkt)											\
+	auto sendBuffer = ServerPacketHandler::MakePKTSendBuffer(pkt); \
+	session->SendPacket(sendBuffer);

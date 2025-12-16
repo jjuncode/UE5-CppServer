@@ -39,7 +39,9 @@ public:
 	virtual uint32	Run()	override;
 	virtual void	Exit()	override;
 
+	void Stop();
 	void Destroy();
+	void WaitForThread();
 
 private:
 	bool RecvPacket(TArray<uint8>& OutPacket);
@@ -47,7 +49,7 @@ private:
 
 protected:
 	FRunnableThread* Thread = nullptr;
-	bool Running = true;
+	std::atomic<bool> Running = true;
 	FSocket* Socket;
 
 	TWeakPtr<class PacketSession> SessionRef;
@@ -65,14 +67,16 @@ public:
 
 	bool SendPacket(SendBufferRef SendBuffer);
 
+	void Stop();
 	void Destroy();
+	void WaitForThread();
 
 private:
 	bool SendDesiredBytes(const uint8* Buffer, int32 Size);
 
 protected:
 	FRunnableThread* Thread = nullptr;
-	bool Running = true;
+	std::atomic<bool> Running = true;
 	FSocket* Socket;
 
 	TWeakPtr<class PacketSession> SessionRef;

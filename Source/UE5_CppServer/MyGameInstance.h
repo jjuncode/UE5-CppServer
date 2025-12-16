@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 #include "NetUtils.h"
+#include "Protocol.pb.h"
 #include "MyGameInstance.generated.h"
 /**
  * 
@@ -25,10 +26,22 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DisconnectServer();
+	virtual void Shutdown() override;
+
+public:
+	void HandleSpawn(const Protocol::PlayerInfo& PlayerInfo);
+	void HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt);
+	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
 public:
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");
 	int32 Port = 7777;
 	TSharedPtr<class PacketSession> ClientSession;
+
+public:
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> PlayerClass;
+
+	TMap<uint64, AActor*> Players;
 };

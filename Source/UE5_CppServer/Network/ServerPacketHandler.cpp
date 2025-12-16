@@ -1,6 +1,7 @@
 #include "ServerPacketHandler.h"
 #include "BufferReader.h"
 #include "PacketSession.h"
+#include "MyGameInstance.h"
 
 extern PacketHandlerFunc GPacketHandler[UINT16_MAX]{};
 
@@ -14,23 +15,47 @@ bool Handle_S_LOGIN(PacketSessionRef& session, Protocol::S_LOGIN& pkt)
 	if (pkt.success() == false)
 		return false;
 
-	if (pkt.players_size() == 0)
+	// TODO : 캐릭터 선택해서 idx전송
+	for (int32 i = 0; i < pkt.players_size(); i++)
 	{
-		// 캐릭터 생성창
+		const Protocol::PlayerInfo& Player = pkt.players(i);
 	}
 
 	// 입장 UI버튼 눌러서 게임 입장
-	Protocol::C_ENTER_GAME enterGmaePkt;
-	enterGmaePkt.set_playerindex(0);	// 첫번째 캐릭터로 강제입장 
-	auto sendBuffer = ServerPacketHandler::MakePKTSendBuffer(enterGmaePkt);
-	session->SendPacket(sendBuffer);
+	Protocol::C_ENTER_GAME enterGamePkt;
+	enterGamePkt.set_playerindex(0);	// 첫번째 캐릭터로 강제입장 
+	SEND_PACKET(session, enterGamePkt);
 
 	return true;
 }
 
 bool Handle_S_ENTER_GAME(PacketSessionRef& session, Protocol::S_ENTER_GAME& pkt)
 {
+	if ( auto* GameInstance = Cast<UMyGameInstance>(GWorld->GetGameInstance()))
+	{
+		GameInstance->HandleSpawn(pkt);
+	}
+
 	return true;
+}
+
+bool Handle_S_LEAVE_GAME(PacketSessionRef& session, Protocol::S_LEAVE_GAME& pkt)
+{
+	return false;
+}
+
+bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
+{
+	if (auto* GameInstance = Cast<UMyGameInstance>(GWorld->GetGameInstance()))
+	{
+		GameInstance->HandleSpawn(pkt);
+	}
+	return true;
+}
+
+bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
+{
+	return false;
 }
 
 bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)

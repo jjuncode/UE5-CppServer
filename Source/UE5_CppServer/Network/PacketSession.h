@@ -18,7 +18,9 @@ public:
 
 	void SendPacket(SendBufferRef SendBuffer);
 
-	void Disconnect();
+	void StopThread();
+	void WaitForThread();
+	void DestroyThread();
 
 public:
 	class FSocket* Socket;

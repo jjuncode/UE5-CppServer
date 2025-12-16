@@ -36,17 +36,30 @@ void PacketSession::SendPacket(SendBufferRef SendBuffer)
 	SendPacketQueue.Enqueue(SendBuffer); 
 }
 
-void PacketSession::Disconnect()
+void PacketSession::StopThread()
 {
 	if (RecvWorkerThread)
 	{
-		RecvWorkerThread->Destroy();
-		RecvWorkerThread = nullptr;
+		RecvWorkerThread->Stop();
 	}
 
 	if (SendWorkerThread)
 	{
-		SendWorkerThread->Destroy();
-		SendWorkerThread = nullptr;
+		SendWorkerThread->Stop();
 	}
+}
+
+void PacketSession::WaitForThread()
+{
+	RecvWorkerThread->WaitForThread();
+	SendWorkerThread->WaitForThread();
+}
+
+void PacketSession::DestroyThread()
+{
+	RecvWorkerThread->Destroy();
+	SendWorkerThread->Destroy();
+
+	RecvWorkerThread = nullptr;
+	SendWorkerThread = nullptr;
 }

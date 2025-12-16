@@ -1,0 +1,23 @@
+# ===============================
+# C / C++
+# ===============================
+*.c     text eol=lf working-tree-encoding=UTF-8
+*.cpp   text eol=lf working-tree-encoding=UTF-8
+*.h     text eol=lf working-tree-encoding=UTF-8
+*.hpp   text eol=lf working-tree-encoding=UTF-8
+*.inl   text eol=lf working-tree-encoding=UTF-8
+
+# ===============================
+# C#
+# ===============================
+*.cs    text eol=lf working-tree-encoding=UTF-8
+
+# ===============================
+# Script
+# ===============================
+*.sh    text eol=lf
+
+# ===============================
+# Windows Script
+# ===============================
+*.bat   text eol=crlf

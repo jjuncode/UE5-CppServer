@@ -40,9 +40,19 @@ void RecvWorker::Exit()
 {
 }
 
+void RecvWorker::Stop()
+{
+	Running.store(false);
+}
+
 void RecvWorker::Destroy()
 {
-	Running = false;
+	delete Thread;
+}
+
+void RecvWorker::WaitForThread()
+{
+	Thread->WaitForCompletion();
 }
 
 bool RecvWorker::RecvPacket(TArray<uint8>& OutPacket)
@@ -63,6 +73,9 @@ bool RecvWorker::RecvPacket(TArray<uint8>& OutPacket)
 
 	TArray<uint8> DataBuffer;
 	const int32 DataSize = Header.Size - HeaderSize;
+	if (DataSize == 0)
+		return true;
+
 	OutPacket.AddZeroed(DataSize);
 
 	if (RecvDesiredBytes(&OutPacket[HeaderSize], DataSize) == false)
@@ -74,7 +87,7 @@ bool RecvWorker::RecvPacket(TArray<uint8>& OutPacket)
 bool RecvWorker::RecvDesiredBytes(uint8* Results, int32 Size)
 {
 	uint32 PendingDataSize;
-	if (Socket->HasPendingData(PendingDataSize) == false || PendingDataSize <= 0)
+		if ( Socket->HasPendingData(PendingDataSize) == false || PendingDataSize <= 0)
 		return false;
 
 	int32 Offset = 0;
@@ -138,15 +151,28 @@ bool SendWorker::SendPacket(SendBufferRef SendBuffer)
 	return true;
 }
 
+void SendWorker::Stop()
+{
+	Running.store(false);
+}
+
 void SendWorker::Destroy()
 {
-	Running = false;
+	delete Thread;
+}
+
+void SendWorker::WaitForThread()
+{
+	Thread->WaitForCompletion();
 }
 
 bool SendWorker::SendDesiredBytes(const uint8* Buffer, int32 Size)
 {
 	while (Size > 0)
 	{
+		if (Socket == nullptr) 
+			return false;
+
 		int32 ByteSent = 0;
 		if (Socket->Send(Buffer, Size, OUT ByteSent) == false)
 			return false;
@@ -155,6 +181,6 @@ bool SendWorker::SendDesiredBytes(const uint8* Buffer, int32 Size)
 		Buffer += ByteSent;
 	}
 
-	return false;
+	return true;
 
 }
