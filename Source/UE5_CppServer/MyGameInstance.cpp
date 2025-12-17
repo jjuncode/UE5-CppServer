@@ -57,13 +57,11 @@ void UMyGameInstance::SendPacket(SendBufferRef SendBuffer)
 
 void UMyGameInstance::DisconnectServer()
 {
-	ClientSession->StopThread();	
-	ClientSession->WaitForThread();
-	ClientSession->DestroyThread();	
+	if (Socket == nullptr || ClientSession == nullptr)
+		return;
 
-	ISocketSubsystem* SocketSubSystem = ISocketSubsystem::Get();
-	SocketSubSystem->DestroySocket(Socket);
-	Socket = nullptr;
+	Protocol::C_LEAVE_GAME LeavePkt;
+	SEND_PACKET(ClientSession, LeavePkt);
 }
 
 void UMyGameInstance::Shutdown()
@@ -71,6 +69,16 @@ void UMyGameInstance::Shutdown()
 	Super::Shutdown();
 
 	DisconnectServer();
+
+	ClientSession->StopThread();
+	ClientSession->WaitForThread();
+	ClientSession->DestroyThread();
+
+	ISocketSubsystem* SocketSubSystem = ISocketSubsystem::Get();
+	SocketSubSystem->DestroySocket(Socket);
+	Socket = nullptr;
+
+	//DisconnectServer();
 }
 
 void UMyGameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo)
@@ -103,4 +111,28 @@ void UMyGameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
 	for ( auto& Player : SpawnPkt.players())
 		HandleSpawn(Player);
+}
+
+void UMyGameInstance::HandleDespawn(uint64 ObjectId)
+{
+	if (Socket == nullptr || ClientSession == nullptr)
+		return;
+
+	auto* World = GetWorld();
+	if (World == nullptr)
+		return;
+
+	// TODO : Despawn Logic
+
+	AActor** FindActor = Players.Find(ObjectId);
+	if (FindActor == nullptr)
+		return;
+
+	World->DestroyActor(*FindActor);
+}
+
+void UMyGameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
+{
+	for (auto& id : DespawnPkt.object_ids())
+		HandleDespawn(id);
 }

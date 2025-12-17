@@ -33,6 +33,9 @@ public:
 	void HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
+	void HandleDespawn(uint64 ObjectId);
+	void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
+
 public:
 	class FSocket* Socket;
 	FString IpAddress = TEXT("127.0.0.1");
