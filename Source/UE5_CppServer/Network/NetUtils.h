@@ -41,3 +41,7 @@ USING_SHARED_PTR(SendBuffer);
 #define SEND_PACKET(session, pkt)											\
 	auto sendBuffer = ServerPacketHandler::MakePKTSendBuffer(pkt); \
 	session->SendPacket(sendBuffer);
+
+#define SEND_PACKET_NO_SESSION(pkt)	\
+	auto sendBuffer = ServerPacketHandler::MakePKTSendBuffer(pkt); \
+	Cast<UMyGameInstance>(GetGameInstance())->SendPacket(sendBuffer);

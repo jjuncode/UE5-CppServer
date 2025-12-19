@@ -29,12 +29,14 @@ public:
 	virtual void Shutdown() override;
 
 public:
-	void HandleSpawn(const Protocol::PlayerInfo& PlayerInfo);
+	void HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool IsMine);
 	void HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt);
 	void HandleSpawn(const Protocol::S_SPAWN& SpawnPkt);
 
 	void HandleDespawn(uint64 ObjectId);
 	void HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt);
+
+	void HandleMove(const Protocol::S_MOVE& MovePkt);
 
 public:
 	class FSocket* Socket;
@@ -44,7 +46,8 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<AActor> PlayerClass;
+	TSubclassOf<AActor> OtherPlayerClass;
 
-	TMap<uint64, AActor*> Players;
+	class AMyClientPlayer* MyPlayer;
+	TMap<uint64, class AClientPlayer*> Players;
 };

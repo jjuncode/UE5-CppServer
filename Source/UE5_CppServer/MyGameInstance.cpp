@@ -6,6 +6,8 @@
 #include "PacketSession.h"
 #include "Protocol.pb.h"
 #include "ServerPacketHandler.h"
+#include "ClientPlayer.h"
+#include "MyClientPlayer.h"
 
 void UMyGameInstance::ConnectServer()
 {
@@ -81,7 +83,7 @@ void UMyGameInstance::Shutdown()
 	//DisconnectServer();
 }
 
-void UMyGameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo)
+void UMyGameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo, bool IsMine)
 {
 	if (Socket == nullptr || ClientSession == nullptr)
 		return;
@@ -97,20 +99,34 @@ void UMyGameInstance::HandleSpawn(const Protocol::PlayerInfo& PlayerInfo)
 		return;
 
 	FVector SpawnLocation{ PlayerInfo.x(), PlayerInfo.y(), PlayerInfo.z() };
-	AActor* Actor = World->SpawnActor(PlayerClass, &SpawnLocation);
 
-	Players.Add(PlayerInfo.object_id(), Actor);
+	if (IsMine)
+	{
+		AMyClientPlayer* myPlayer = Cast<AMyClientPlayer>(GetFirstLocalPlayerController()->GetPawn());
+		if (myPlayer == nullptr)
+			return;
+	
+		myPlayer->SetPlayerInfo(PlayerInfo);
+		MyPlayer = myPlayer;
+		Players.Add(ObjectId, myPlayer);
+	}
+	else
+	{
+		AClientPlayer* Player = Cast<AClientPlayer>(World->SpawnActor(OtherPlayerClass, &SpawnLocation));
+		Player->SetPlayerInfo(PlayerInfo);
+		Players.Add(PlayerInfo.object_id(), Player);
+	}
 }
 
 void UMyGameInstance::HandleSpawn(const Protocol::S_ENTER_GAME& EnterGamePkt)
 {
-	HandleSpawn(EnterGamePkt.player());
+	HandleSpawn(EnterGamePkt.player(), true);
 }
 
 void UMyGameInstance::HandleSpawn(const Protocol::S_SPAWN& SpawnPkt)
 {
 	for ( auto& Player : SpawnPkt.players())
-		HandleSpawn(Player);
+		HandleSpawn(Player, false);
 }
 
 void UMyGameInstance::HandleDespawn(uint64 ObjectId)
@@ -124,7 +140,7 @@ void UMyGameInstance::HandleDespawn(uint64 ObjectId)
 
 	// TODO : Despawn Logic
 
-	AActor** FindActor = Players.Find(ObjectId);
+	AClientPlayer** FindActor = Players.Find(ObjectId);
 	if (FindActor == nullptr)
 		return;
 
@@ -135,4 +151,25 @@ void UMyGameInstance::HandleDespawn(const Protocol::S_DESPAWN& DespawnPkt)
 {
 	for (auto& id : DespawnPkt.object_ids())
 		HandleDespawn(id);
+}
+
+void UMyGameInstance::HandleMove(const Protocol::S_MOVE& MovePkt)
+{
+	if (Socket == nullptr || ClientSession == nullptr)
+		return;
+
+	auto* World = GetWorld();
+	if (World == nullptr)
+		return;
+
+	const uint64 ObjectId = MovePkt.playerinfo().object_id();
+	AClientPlayer** FindActor = Players.Find(ObjectId);
+	if (FindActor == nullptr)
+		return;
+
+	AClientPlayer* Player = *FindActor;
+	if (Player->IsMyPlayer())
+		return;
+	
+	Player->SetPlayerInfo(MovePkt.playerinfo());
 }
